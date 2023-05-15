@@ -156,6 +156,8 @@ type Handler struct {
 	queryThrottler   *Throttler
 	slowQueries      chan *hybridqp.SelectDuration
 	StatisticsPusher *statisticsPusher.StatisticsPusher
+
+	numClients uint64
 }
 
 // NewHandler returns a new instance of handler with routes.
@@ -179,7 +181,7 @@ func NewHandler(c config.Config) *Handler {
 	h.queryThrottler.EnqueueTimeout = time.Duration(c.EnqueuedQueryTimeout)
 	h.queryThrottler.Logger = logger.GetLogger()
 
-	// Disable the write log if they have been suppressed.
+	// Disable to write log if they have been suppressed.
 	writeLogEnabled := c.LogEnabled
 	if c.SuppressWriteLog {
 		writeLogEnabled = false
@@ -346,6 +348,14 @@ func (h *Handler) AddRoutes(routes ...Route) {
 
 // ServeHTTP responds to HTTP request to the handler.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	nums := atomic.LoadUint64(&h.numClients)
+	if nums >= h.Config.MaxConnectionLimit {
+		http.Error(w, "[Limit Exceeded] Service Unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	atomic.AddUint64(&nums, 1)
+	defer atomic.AddUint64(&nums, -1)
+
 	atomic.AddInt64(&statistics.HandlerStat.Requests, 1)
 	atomic.AddInt64(&statistics.HandlerStat.ActiveRequests, 1)
 	defer atomic.AddInt64(&statistics.HandlerStat.ActiveRequests, -1)

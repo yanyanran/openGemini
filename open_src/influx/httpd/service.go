@@ -27,7 +27,7 @@ type Service struct {
 	https     bool
 	cert      string
 	key       string
-	limit     int
+	limit     int // limit
 	tlsConfig *tls.Config
 	err       chan error
 
@@ -50,7 +50,7 @@ func NewService(c config.Config) *Service {
 		https:          c.HTTPSEnabled,
 		cert:           c.HTTPSCertificate,
 		key:            c.HTTPSPrivateKey,
-		limit:          c.MaxConnectionLimit,
+		limit:          c.MaxConnectionLimit, // limit
 		tlsConfig:      c.TLS,
 		err:            make(chan error),
 		unixSocket:     c.UnixSocketEnabled,
@@ -213,7 +213,7 @@ func (s *Service) Close() error {
 func (s *Service) Err() <-chan error { return s.err }
 
 // Addr returns the listener's address. Returns nil if listener is closed.
-//test func, so return 0 index addr
+// test func, so return 0 index addr
 func (s *Service) Addr() net.Addr {
 	if s.Ln[0] != nil {
 		return s.Ln[0].Addr()
@@ -223,7 +223,7 @@ func (s *Service) Addr() net.Addr {
 
 // BoundHTTPAddr returns the string version of the address that the HTTP server is listening on.
 // This is useful if you start an ephemeral server in test with bind address localhost:0.
-//test func, so return 0 index addr
+// test func, so return 0 index addr
 func (s *Service) BoundHTTPAddr() string {
 	return s.Ln[0].Addr().String()
 }

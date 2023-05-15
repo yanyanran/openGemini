@@ -63,7 +63,7 @@ type Server struct {
 	statisticsPusher *statisticsPusher.StatisticsPusher
 	QueryExecutor    *query.Executor
 	PointsWriter     *coordinator.PointsWriter
-	httpService      *httpd.Service
+	httpService      *httpd.Service // service
 
 	// joinPeers are the metaservers specified at run time to join this server to
 	metaJoinPeers []string
