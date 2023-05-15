@@ -51,7 +51,7 @@ type Config struct {
 	HTTPSCertificate        string         `toml:"https-certificate"`
 	HTTPSPrivateKey         string         `toml:"https-private-key"`
 	MaxRowLimit             int            `toml:"max-row-limit"`
-	MaxConnectionLimit      uint64         `toml:"max-connection-limit"` // max connect limit
+	MaxConnectionLimit      int            `toml:"max-connection-limit"` // max connect limit
 	SharedSecret            string         `toml:"shared-secret"`
 	Realm                   string         `toml:"realm"`
 	UnixSocketEnabled       bool           `toml:"unix-socket-enabled"`

@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -157,7 +158,8 @@ type Handler struct {
 	slowQueries      chan *hybridqp.SelectDuration
 	StatisticsPusher *statisticsPusher.StatisticsPusher
 
-	numClients uint64
+	numClients int
+	mu         sync.Mutex
 }
 
 // NewHandler returns a new instance of handler with routes.
@@ -348,13 +350,23 @@ func (h *Handler) AddRoutes(routes ...Route) {
 
 // ServeHTTP responds to HTTP request to the handler.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	nums := atomic.LoadUint64(&h.numClients)
+	h.mu.Lock()
+	nums := h.numClients
+	h.mu.Unlock()
+
 	if nums >= h.Config.MaxConnectionLimit {
 		http.Error(w, "[Limit Exceeded] Service Unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	atomic.AddUint64(&nums, 1)
-	defer atomic.AddUint64(&nums, -1)
+	h.mu.Lock()
+	h.numClients++
+	h.mu.Unlock()
+
+	defer func() {
+		h.mu.Lock()
+		h.numClients--
+		h.mu.Unlock()
+	}()
 
 	atomic.AddInt64(&statistics.HandlerStat.Requests, 1)
 	atomic.AddInt64(&statistics.HandlerStat.ActiveRequests, 1)
